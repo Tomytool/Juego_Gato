@@ -1,9 +1,13 @@
-const casillas = document.querySelectorAll('.casilla');
-const opciones = document.querySelectorAll('.opcion');
-const reiniciar = document.querySelector('#reiniciar');
-const cuadroGanador =document.querySelector('#cuadroGanador')
-let valorGato = 'X';
-let ganador = [
+const casillas = document.querySelectorAll(".casilla");
+const opciones = document.querySelectorAll(".opcion");
+const btnReiniciar = document.querySelector("#reiniciar");
+const cuadroGanador = document.querySelector("#cuadroGanador");
+
+let estadoTablero = ["", "", "", "", "", "", "", "", ""];
+let jugadorActual = "X";
+let juegoActivo = true;
+
+const combinacionesGanadoras = [
   [0, 1, 2],
   [3, 4, 5],
   [6, 7, 8],
@@ -13,41 +17,76 @@ let ganador = [
   [0, 4, 8],
   [2, 4, 6],
 ];
-let jugador1 = [];
-let jugador2 = [];
 
-const revision = (jugador) => {
-  for (let index = 0; index < ganador.length; index++) {
-    const element = ganador[index];
-    if (
-      opciones[element[0]].innerText == jugador &&
-      opciones[element[1]].innerText == jugador &&
-      opciones[element[2]].innerText == jugador
-    ) {
-      cuadroGanador.style.display='flex'
-      cuadroGanador.innerHTML=`<h2>El ganador es el jugador ${jugador}</h2>`
-      console.log(`Ganador es el jugador ${jugador}`);
-    }
-  }
+const mensajes = {
+  ganador: (jugador) => `<h2>El ganador es el jugador ${jugador}</h2>`,
+  empate: () => `<h2>¡Es un empate!</h2>`,
 };
 
-reiniciar.addEventListener('click', () => {
-  opciones.forEach((elemento) => {
-    elemento.innerText = '';
-    cuadroGanador.style.display='none'
-    valorGato = 'X'
-  });
+const validarResultado = () => {
+  let rondaGanada = false;
+
+  for (let i = 0; i < combinacionesGanadoras.length; i++) {
+    const [a, b, c] = combinacionesGanadoras[i];
+    const valA = estadoTablero[a];
+    const valB = estadoTablero[b];
+    const valC = estadoTablero[c];
+
+    if (valA === "" || valB === "" || valC === "") {
+      continue;
+    }
+
+    if (valA === valB && valB === valC) {
+      rondaGanada = true;
+      break;
+    }
+  }
+
+  if (rondaGanada) {
+    cuadroGanador.style.display = "flex";
+    cuadroGanador.innerHTML = mensajes.ganador(jugadorActual);
+    juegoActivo = false;
+    return;
+  }
+
+  const rondaEmpate = !estadoTablero.includes("");
+  if (rondaEmpate) {
+    cuadroGanador.style.display = "flex";
+    cuadroGanador.innerHTML = mensajes.empate();
+    juegoActivo = false;
+    return;
+  }
+
+  cambiarJugador();
+};
+
+const cambiarJugador = () => {
+  jugadorActual = jugadorActual === "X" ? "O" : "X";
+};
+
+const manejarClickCasilla = (casilla, indice) => {
+  if (estadoTablero[indice] !== "" || !juegoActivo) {
+    return;
+  }
+
+  estadoTablero[indice] = jugadorActual;
+  opciones[indice].innerText = jugadorActual;
+
+  validarResultado();
+};
+
+const reiniciarJuego = () => {
+  estadoTablero = ["", "", "", "", "", "", "", "", ""];
+  juegoActivo = true;
+  jugadorActual = "X";
+
+  opciones.forEach((opcion) => (opcion.innerText = ""));
+  cuadroGanador.style.display = "none";
+  cuadroGanador.innerHTML = "";
+};
+
+casillas.forEach((casilla, indice) => {
+  casilla.addEventListener("click", () => manejarClickCasilla(casilla, indice));
 });
 
-casillas.forEach((elemento, indice) => {
-  elemento.addEventListener('click', (e) => {
-    opciones[indice].innerText = valorGato;
-    if (valorGato == 'X') {
-      revision('X');
-      valorGato = 'O';
-    } else {
-      revision('O');
-      valorGato = 'X';
-    }
-  });
-});
+btnReiniciar.addEventListener("click", reiniciarJuego);
